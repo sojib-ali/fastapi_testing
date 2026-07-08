@@ -1,13 +1,8 @@
 import Link from "next/link";
 import styles from "./postitem.module.css";
+import { Post } from "@/util/types/posts";
 
-interface Post {
-    id: number;
-    author: string;
-    title: string;
-    content: string;
-    date_posted: string;
-}
+
 
 export default function PostItem({ post }: { post: Post }) {
     const initials = post.author
