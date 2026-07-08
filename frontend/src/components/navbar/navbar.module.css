@@ -1,0 +1,68 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a202c;
+  padding: 0.75rem 2rem;
+  border-bottom: 1px solid #2d3748;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.brand h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.brand a {
+  color: #a0aec0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.brand a:hover {
+  color: #ffffff;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btnLogin {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #4299e1;
+  color: #ffffff;
+  transition: background 0.2s;
+}
+
+.btnLogin:hover {
+  background: #3182ce;
+}
+
+.btnRegister {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid #a0aec0;
+  transition: background 0.2s;
+}
+
+.btnRegister:hover {
+  background: #2d3748;
+}
