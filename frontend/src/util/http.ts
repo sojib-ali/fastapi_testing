@@ -11,3 +11,14 @@ export async function fetchPosts() {
     const data = await response.json();
     return data;
 }
+
+export async function fetchPost({ id, signal }: { id: number; signal?: AbortSignal }) {
+    const response = await fetch(`${apiUrl}${id}`, { signal })
+
+    if (!response.ok) {
+        const error = new Error("An error occured while fetching a single procut")
+        throw error;
+    }
+    const data = await response.json();
+    return data;
+}

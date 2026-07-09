@@ -3,6 +3,7 @@
 import usePosts from "@/util/query-hooks/usePosts";
 import PostItem from "../postitem/PostItem";
 import styles from "./postlist.module.css";
+import Link from "next/link";
 
 
 

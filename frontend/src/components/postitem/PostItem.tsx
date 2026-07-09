@@ -21,7 +21,7 @@ export default function PostItem({ post }: { post: Post }) {
                 </div>
             </div>
             <h2 className={styles.title}>
-                <Link href="#">{post.title}</Link>
+                <Link href={`/posts/${post.id}`}>{post.title}</Link>
             </h2>
             <p className={styles.content}>{post.content}</p>
         </article>

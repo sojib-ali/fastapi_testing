@@ -7,6 +7,8 @@ export default function Navbar() {
             <div className={styles.brand}>
                 <h1>FastAPI Blog</h1>
                 <Link href="/">Home</Link>
+                <Link href="/posts">Posts</Link>
+
             </div>
             <div className={styles.actions}>
                 <Link href="/login" className={styles.btnLogin}>Login</Link>
