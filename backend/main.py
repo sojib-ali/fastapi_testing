@@ -1,6 +1,9 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI()
 
@@ -40,8 +43,35 @@ def get_posts():
 
 
 @app.get("/api/posts/{post_id}")
-def get_posts(post_id: int):
+def get_post(post_id: int):
     for post in posts:
         if post.get("id") == post_id:
             return post
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
+## StarletteHTTPException Handler
+
+@app.exception_handler(StarletteHTTPException)
+def general_http_exception_handler(request: Request, excption: StarletteHTTPException):
+    message = (
+        excption.detail
+        if excption.detail
+        else "An error occured. Please check your request and try again"
+    )
+
+    if request.url.path.startswith("/api"):
+        return JSONResponse(
+            status_code=excption.status_code,
+            content={"detail": message}
+        )
+
+
+## Request validateion error
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(request: Request, exception: RequestValidationError):
+    if request.url.path.startswith("/api"):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content={"detail": exception.errors()},
+        )

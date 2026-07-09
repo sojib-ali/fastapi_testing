@@ -63,3 +63,39 @@
   font-size: 0.95rem;
   line-height: 1.6;
 }
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btnAction {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btnEdit {
+  background: transparent;
+  color: #63b3ed;
+  border: 1px solid #63b3ed;
+}
+
+.btnEdit:hover {
+  background: rgba(99, 179, 237, 0.1);
+}
+
+.btnDelete {
+  background: transparent;
+  color: #fc8181;
+  border: 1px solid #fc8181;
+}
+
+.btnDelete:hover {
+  background: rgba(252, 129, 129, 0.1);
+}

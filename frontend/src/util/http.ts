@@ -16,8 +16,11 @@ export async function fetchPost({ id, signal }: { id: number; signal?: AbortSign
     const response = await fetch(`${apiUrl}${id}`, { signal })
 
     if (!response.ok) {
-        const error = new Error("An error occured while fetching a single procut")
-        throw error;
+        const errorData = await response.json().catch(() => null);
+
+        const errorMessage = errorData?.detail || "An error occured while fetching a single post";
+
+        throw new Error(errorMessage);
     }
     const data = await response.json();
     return data;

@@ -24,6 +24,10 @@ export default function PostItem({ post }: { post: Post }) {
                 <Link href={`/posts/${post.id}`}>{post.title}</Link>
             </h2>
             <p className={styles.content}>{post.content}</p>
+            <div className={styles.actions}>
+                <button className={`${styles.btnAction} ${styles.btnEdit}`}>Edit Post</button>
+                <button className={`${styles.btnAction} ${styles.btnDelete}`}>Delete Post</button>
+            </div>
         </article>
     )
 }
