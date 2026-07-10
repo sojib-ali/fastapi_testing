@@ -5,9 +5,9 @@ import { Post } from "@/util/types/posts";
 
 
 export default function PostItem({ post }: { post: Post }) {
-    const initials = post.author
+    const initials = post.author.username
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .toUpperCase();
 
@@ -16,7 +16,7 @@ export default function PostItem({ post }: { post: Post }) {
             <div className={styles.header}>
                 <div className={styles.avatar}>{initials}</div>
                 <div className={styles.meta}>
-                    <Link href="#">{post.author}</Link>
+                    <Link href="#">{post.author.username}</Link>
                     <span className={styles.date}>{post.date_posted}</span>
                 </div>
             </div>
