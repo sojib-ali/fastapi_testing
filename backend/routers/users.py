@@ -141,5 +141,5 @@ async def delete_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]
             detail="User not found",
         )
 
-    db.delete(user)
+    await db.delete(user)
     await db.commit()
