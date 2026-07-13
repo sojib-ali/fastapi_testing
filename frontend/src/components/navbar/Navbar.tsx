@@ -13,6 +13,7 @@ export default function Navbar() {
             <div className={styles.actions}>
                 <Link href="/login" className={styles.btnLogin}>Login</Link>
                 <Link href="/register" className={styles.btnRegister}>Register</Link>
+                <Link href="/posts/new" className={styles.btnRegister}>New Post</Link>
             </div>
         </nav>
     )

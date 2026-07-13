@@ -8,6 +8,7 @@ export interface User {
 
 export interface Post {
     id: number;
+    user_id: number;
     author: User;
     title: string;
     content: string;

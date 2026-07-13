@@ -1,6 +1,10 @@
+'use client'
+
 import Link from "next/link";
 import styles from "./postitem.module.css";
 import { Post } from "@/util/types/posts";
+import useDeletePost from "@/util/query-hooks/useDeletePost";
+import { useRouter } from "next/navigation";
 
 
 
@@ -10,6 +14,8 @@ export default function PostItem({ post }: { post: Post }) {
         .map((n: string) => n[0])
         .join("")
         .toUpperCase();
+    const router = useRouter();
+    const { mutate, isPending } = useDeletePost();
 
     return (
         <article className={styles.card}>
@@ -25,8 +31,24 @@ export default function PostItem({ post }: { post: Post }) {
             </h2>
             <p className={styles.content}>{post.content}</p>
             <div className={styles.actions}>
-                <button className={`${styles.btnAction} ${styles.btnEdit}`}>Edit Post</button>
-                <button className={`${styles.btnAction} ${styles.btnDelete}`}>Delete Post</button>
+                <button
+                    className={`${styles.btnAction} ${styles.btnEdit}`}
+                    onClick={() => router.push(`/posts/${post.id}/edit`)}
+                >
+                    Edit Post
+                </button>
+                <button
+                    className={`${styles.btnAction} ${styles.btnDelete}`}
+                    onClick={() => mutate(
+                        post.id, {
+                        onSuccess: () => {
+                            router.push("/");
+                        }
+                    }
+                    )}
+                    disabled={isPending}
+
+                >{isPending ? "Deleting.." : "Delete Post"}</button>
             </div>
         </article>
     )
