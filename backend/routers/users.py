@@ -1,24 +1,34 @@
 from typing import Annotated
+from datetime import timedelta
 
+from fastapi import Response
 from fastapi import Depends, FastAPI, HTTPException, status, APIRouter
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 import models
 from database import get_db
-from schemas import PostResponse, UserCreate, UserResponse, UserUpdate
+from schemas import PostResponse, UserCreate, UserUpdate, UserPrivate, UserPublic, LoginRequest, Message
+from fastapi.security import OAuth2PasswordRequestForm
+from auth import (
+     create_token, verify_password, TokenType, set_access_cookie, set_refresh_cookie
+)
+from config import settings
+from dependencies import get_current_user
+
 
 router = APIRouter()
 
+
 @router.post(
     "",
-    response_model=UserResponse,
+    response_model=UserPrivate,
     status_code=status.HTTP_201_CREATED,
 )
 
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
-        select(models.User).where(models.User.username == user.username)
+        select(models.User).where(func.lower(models.User.username) == user.username.lower())
     )
 
     existing_user = result.scalars().first()
@@ -30,7 +40,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     
     # for email
     result = await db.execute(
-        select(models.User).where(models.User.email == user.email),
+        select(models.User).where(func.lower(models.User.email) == user.email.lower()),
     )
     
     existing_email = result.scalars().first()
@@ -42,12 +52,58 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     
     new_user = models.User(
         username=user.username,
-        email=user.email,
-    )
+        email=user.email.lower(),
+        password_hash=hash_password(user.password),
+    ) 
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     return new_user
+
+@router.post("/login", response_model=Message)
+async def login(login_data: LoginRequest, response: Response, db: Annotated[AsyncSession, Depends(get_db)]):
+    # Look up user by email (case-insensitive)
+    result = await db.execute(
+        select(models.User).Where(func.lower(models.User.email) == login_data.email.lower())
+    )
+
+    user = result.scalars().first()
+
+    #Don't reveal whether the email or password was incorrect
+    if user is None or not verify_password(login_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+    
+    access_token = create_token(
+        subject=str(user.id),
+        token_type=TokenType.ACCESS,
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
+    )
+
+    refresh_token = create_token(
+        subject=str(user.id),
+        token_type=TokenType.REFRESH,
+        expires_delta=timedelta(days=settings.refresh_token_expire_days)
+    )
+
+    set_access_cookie(response, access_token)
+    set_refresh_cookie(response, refresh_token)
+
+    return Message(message="Login successful")
+
+@router.get(
+    "/me",
+    response_model=UserPrivate,
+)
+async def get_me(
+    current_user: Annotated[
+        models.User,
+        Depends(get_current_user),
+    ],
+):
+    return current_user
 
 
 @router.get("/{user_id}", response_model=UserResponse)
