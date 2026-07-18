@@ -155,3 +155,7 @@ Thumbs.db
 .DS_Store
 Thumbs.db
 *.pid
+
+# Database
+*.db
+*.sqlite3
