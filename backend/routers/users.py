@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import timedelta
 
-from fastapi import Response
+from fastapi import Response, Request
 from fastapi import Depends, FastAPI, HTTPException, status, APIRouter
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,7 @@ from database import get_db
 from schemas import PostResponse, UserCreate, UserUpdate, UserPrivate, UserPublic, LoginRequest, Message
 from fastapi.security import OAuth2PasswordRequestForm
 from auth import (
-     create_token, verify_password, TokenType, set_access_cookie, set_refresh_cookie
+     create_token, verify_token, hash_password, verify_password, TokenType, set_access_cookie, set_refresh_cookie, clear_auth_cookies
 )
 from config import settings
 from dependencies import get_current_user
@@ -64,7 +64,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
 async def login(login_data: LoginRequest, response: Response, db: Annotated[AsyncSession, Depends(get_db)]):
     # Look up user by email (case-insensitive)
     result = await db.execute(
-        select(models.User).Where(func.lower(models.User.email) == login_data.email.lower())
+        select(models.User).where(func.lower(models.User.email) == login_data.email.lower())
     )
 
     user = result.scalars().first()
@@ -105,8 +105,86 @@ async def get_me(
 ):
     return current_user
 
+@router.post(
+    "/refresh",
+    response_model=Message,
+)
+async def refresh_access_token(
+    request: Request,
+    response: Response,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    # Read refresh token from cookie
+    refresh_token = request.cookies.get(
+        settings.refresh_cookie_name,
+    )
 
-@router.get("/{user_id}", response_model=UserResponse)
+    # Verify refresh token
+    payload = verify_token(
+        token=refresh_token,
+        expected_type=TokenType.REFRESH,
+    )
+
+    user_id = payload["sub"]
+
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token.",
+        )
+
+    # Make sure the user still exists
+    result = await db.execute(
+        select(models.User).where(
+            models.User.id == user_id,
+        )
+    )
+
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found.",
+        )
+
+    # Create a fresh access token
+    access_token = create_token(
+        subject=str(user.id),
+        token_type=TokenType.ACCESS,
+        expires_delta=timedelta(
+            minutes=settings.access_token_expire_minutes,
+        ),
+    )
+
+    # Replace the access-token cookie
+    set_access_cookie(
+        response,
+        access_token,
+    )
+
+    return Message(
+        message="Access token refreshed successfully.",
+    )
+
+
+@router.post(
+    "/logout",
+    response_model=Message,
+)
+async def logout(
+    response: Response,
+):
+    clear_auth_cookies(response)
+
+    return Message(
+        message="Logged out successfully.",
+    )
+
+
+@router.get("/{user_id}", response_model=UserPublic)
 async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
         select(models.User).where(models.User.id == user_id),
@@ -138,7 +216,7 @@ async def get_user_post(user_id:int, db: Annotated[AsyncSession, Depends(get_db)
     return posts
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch("/{user_id}", response_model=UserPrivate)
 async def update_user(
     user_id: int,
     user_update: UserUpdate,

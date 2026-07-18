@@ -1,11 +1,11 @@
 from datetime import UTC, datetime, timedelta
-from fastapi import Response
+from fastapi import Response, HTTPException, status
 
 import jwt
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from enum import Enum
-from typing improt Any
+from typing import Any
 
 from config import settings
 
@@ -16,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/token")
 
 
 def hash_password(password: str) -> str: 
-    return password_hash(password)
+    return password_hash.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash.verify(plain_password, hashed_password)
@@ -159,12 +159,11 @@ def clear_auth_cookies(
     response.delete_cookie(
         key=settings.access_cookie_name,
         path="/",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
     )
 
-    response.delete_cookie(
-        key=settings.refresh_cookie_name,
-        path="/",
-    )
+    
 
 
 
