@@ -149,7 +149,7 @@ def set_refresh_cookie(
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
-        path="/", # or "/api/auth/refresh" for not exposing - check this on later
+        path="/api/users/refresh",  # Only sent to the refresh endpoint — not exposed to other routes
     )
 
 

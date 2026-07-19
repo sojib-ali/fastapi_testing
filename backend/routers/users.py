@@ -14,7 +14,7 @@ from auth import (
      create_token, verify_token, hash_password, verify_password, TokenType, set_access_cookie, set_refresh_cookie, clear_auth_cookies
 )
 from config import settings
-from dependencies import get_current_user
+from dependencies import currentUser
 
 
 router = APIRouter()
@@ -97,12 +97,7 @@ async def login(login_data: LoginRequest, response: Response, db: Annotated[Asyn
     "/me",
     response_model=UserPrivate,
 )
-async def get_me(
-    current_user: Annotated[
-        models.User,
-        Depends(get_current_user),
-    ],
-):
+async def get_me(current_user: currentUser):
     return current_user
 
 @router.post(
@@ -220,8 +215,16 @@ async def get_user_post(user_id:int, db: Annotated[AsyncSession, Depends(get_db)
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
+    current_user: currentUser,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
+
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this user",
+        )
+
     result = await db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
 
@@ -231,9 +234,9 @@ async def update_user(
             detail="User not found",
         )
     
-    if user_update.username is not None and user_update.username != user.username:
+    if user_update.username is not None and user_update.username.lower() != user.username.lower():
         result = await db.execute(
-            select(models.User).where(models.User.username == user_update.username),
+            select(models.User).where(func.lower(models.User.username) == user_update.username.lower()),
         )
         existing_user = result.scalars().first()
         if existing_user:
@@ -242,9 +245,9 @@ async def update_user(
                 detail="Username alreday exists",
             )
     
-    if user_update.email is not None and user_update.email != user.email:
+    if user_update.email is not None and user_update.email.lower() != user.email.lower():
         result = await db.execute(
-            select(models.User).where(models.User.email == user_update.email),
+            select(models.User).where(func.lower(models.User.email) == user_update.email.lower()),
         )
         existing_email = result.scalars().first()
         if existing_email:
@@ -256,7 +259,7 @@ async def update_user(
     if user_update.username is not None:
         user.username = user_update.username
     if user_update.email is not None:
-        user.email = user_update.email
+        user.email = user_update.email.lower()
     if user_update.image_file is not None:
         user.image_file = user_update.image_file
 
@@ -265,7 +268,14 @@ async def update_user(
     return user
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def delete_user(user_id: int, current_user: currentUser, db: Annotated[AsyncSession, Depends(get_db)]):
+
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this user",
+        )
+
     result = await db.execute(select(models.User).where(models.User.id == user_id))
 
     user = result.scalars().first()
