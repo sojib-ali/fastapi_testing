@@ -1,7 +1,9 @@
-const apiUrl = "http://localhost:8000/api/posts";
+import { apiFetch } from "@/lib/api";
+
+const apiUrl = "/api/posts";
 
 export async function fetchPosts() {
-    const response = await fetch(`${apiUrl}`);
+    const response = await apiFetch(`${apiUrl}`);
 
     if (!response.ok) {
         const error = new Error("An error occured while fetching the list of posts");
@@ -13,7 +15,7 @@ export async function fetchPosts() {
 }
 
 export async function fetchPost({ id, signal }: { id: number; signal?: AbortSignal }) {
-    const response = await fetch(`${apiUrl}/${id}`, { signal })
+    const response = await apiFetch(`${apiUrl}/${id}`, { signal })
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -28,11 +30,10 @@ export async function fetchPost({ id, signal }: { id: number; signal?: AbortSign
 
 
 export async function createPost(postData: {
-    title: string, content: string, user_id: number
+    title: string, content: string
 }) {
-    const response = await fetch(apiUrl, {
+    const response = await apiFetch(apiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(postData),
     });
     if (!response.ok)
@@ -42,11 +43,10 @@ export async function createPost(postData: {
 }
 
 export async function updatePost({ id, postData }:
-    { id: number; postData: { title: string; content: string; user_id: number } }
+    { id: number; postData: { title: string; content: string } }
 ) {
-    const response = await fetch(`${apiUrl}/${id}`, {
+    const response = await apiFetch(`${apiUrl}/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(postData),
     });
     if (!response.ok) throw new Error("Failed to update post");
@@ -54,7 +54,7 @@ export async function updatePost({ id, postData }:
 }
 
 export async function deletePost(id: number) {
-    const response = await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+    const response = await apiFetch(`${apiUrl}/${id}`, { method: "DELETE" });
     if (!response.ok) throw new Error("Failed to delete post");
     return true;
 }

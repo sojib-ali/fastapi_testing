@@ -31,7 +31,6 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     // 1. Initial Request
     let response = await fetch(url, {
         ...options,
-        // Ensure cookies are sent on every request
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
@@ -56,14 +55,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     const refreshed = await refreshPromise;
 
     if (!refreshed) {
-        // FIX 2: Check if we are already on the login or register page before redirecting!
-        if (
-            typeof window !== "undefined" &&
-            window.location.pathname !== "/login" &&
-            window.location.pathname !== "/register"
-        ) {
-            window.location.href = "/login";
-        }
+        // Don't redirect here! Let the calling code decide what to do.
+        // - AuthProvider will just set user to null (guest mode).
+        // - Protected pages/components can redirect on their own.
         return response;
     }
 
