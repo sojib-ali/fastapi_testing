@@ -6,7 +6,8 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    image_file?: string;
+    image_file?: string | null;
+    image_path: string;  // Always set by backend: /media/... or /static/.../default.jpg
 }
 
 export async function loginUser(data: { email: string; password: string }) {
@@ -49,4 +50,28 @@ export async function getMe(): Promise<User> {
         throw new Error("Not authenticated");
     }
     return response.json();
+}
+
+export async function updateUser(userId: number, data: { username?: string; email?: string }): Promise<User> {
+    const response = await apiFetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to update profile");
+    }
+    return response.json();
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+    const response = await apiFetch(`/api/users/${userId}`, {
+        method: "DELETE",
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to delete account");
+    }
 }

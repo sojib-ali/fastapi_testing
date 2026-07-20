@@ -17,6 +17,13 @@
   margin-bottom: 0.75rem;
 }
 
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -29,6 +36,16 @@
   font-weight: 600;
   color: #a0aec0;
   flex-shrink: 0;
+}
+
+.avatarImg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .meta a {

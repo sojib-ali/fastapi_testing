@@ -1,6 +1,6 @@
 // src/lib/api.ts
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 // We use a flag to prevent multiple refresh calls from firing simultaneously
 // if several requests fail with 401 at the exact same time.
