@@ -23,7 +23,12 @@ async def lifespan(_app:FastAPI):
     #shutdown
     await engine.dispose()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    # This tells Swagger UI to send cookies with every request (credentials: "include")
+    # so that our HttpOnly cookie auth works when testing via /docs
+    swagger_ui_parameters={"withCredentials": True},
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name="media")

@@ -22,5 +22,8 @@ class Settings(BaseSettings):
     access_cookie_name: str = "access_token"
     refresh_cookie_name: str = "refresh_token"
 
+    #image setting
+    max_upload_size_bytes: int = 5 * 1024 * 1024
+
 
 settings = Settings()
