@@ -166,7 +166,7 @@ def clear_auth_cookies(
     
     response.delete_cookie(
         key=settings.refresh_cookie_name,
-        path="/",
+        path="/api/users/refresh",  # Must match the path it was set with exactly
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
         httponly=True,
