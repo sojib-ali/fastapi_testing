@@ -1,13 +1,13 @@
 'use client';
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchPosts } from "../http";
+import { fetchUserPosts } from "../http";
 import { PaginatedPostsResponse } from "../types/posts";
 
-export default function usePosts() {
+export default function useUserPosts(userId: number) {
     return useInfiniteQuery<PaginatedPostsResponse>({
-        queryKey: ["posts"],
-        queryFn: ({ pageParam = 0 }) => fetchPosts({ pageParam: pageParam as number }),
+        queryKey: ["posts", "user", userId],
+        queryFn: ({ pageParam = 0 }) => fetchUserPosts({ userId, pageParam: pageParam as number }),
         initialPageParam: 0,
         getNextPageParam: (lastPage) => {
             if (lastPage.has_more) {

@@ -8,7 +8,15 @@ import Link from "next/link";
 
 
 export default function PostList() {
-    const { data: posts = [], isLoading, isError, error } = usePosts();
+    const { 
+        data, 
+        isLoading, 
+        isError, 
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = usePosts();
 
     if (isLoading) {
         return (
@@ -34,9 +42,33 @@ export default function PostList() {
 
     return (
         <div className={styles.list}>
-            {posts.map((post) => (
-                <PostItem key={post.id} post={post} />
+            {data?.pages.map((page, i) => (
+                <div key={i}>
+                    {page.posts.map((post) => (
+                        <PostItem key={post.id} post={post} />
+                    ))}
+                </div>
             ))}
+            
+            {hasNextPage && (
+                <div className={styles.loadMoreContainer} style={{ textAlign: "center", margin: "20px 0" }}>
+                    <button 
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        style={{
+                            padding: "10px 20px",
+                            backgroundColor: "#4f46e5",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: isFetchingNextPage ? "not-allowed" : "pointer",
+                            opacity: isFetchingNextPage ? 0.7 : 1
+                        }}
+                    >
+                        {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

@@ -14,3 +14,11 @@ export interface Post {
     content: string;
     date_posted: string;
 }
+
+export interface PaginatedPostsResponse {
+    posts: Post[];
+    total: number;
+    skip: number;
+    limit: number;
+    has_more: boolean;
+}

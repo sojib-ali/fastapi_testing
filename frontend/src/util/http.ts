@@ -2,11 +2,24 @@ import { apiFetch } from "@/lib/api";
 
 const apiUrl = "/api/posts";
 
-export async function fetchPosts() {
-    const response = await apiFetch(`${apiUrl}`);
+export async function fetchPosts({ pageParam = 0 }: { pageParam?: number }) {
+    // API returns PaginatedPostsResponse now
+    const response = await apiFetch(`${apiUrl}?skip=${pageParam}&limit=10`);
 
     if (!response.ok) {
         const error = new Error("An error occured while fetching the list of posts");
+        throw error;
+    }
+
+    const data = await response.json();
+    return data;
+}
+
+export async function fetchUserPosts({ userId, pageParam = 0 }: { userId: number; pageParam?: number }) {
+    const response = await apiFetch(`/api/users/${userId}/posts?skip=${pageParam}&limit=10`);
+
+    if (!response.ok) {
+        const error = new Error("An error occured while fetching the user's posts");
         throw error;
     }
 

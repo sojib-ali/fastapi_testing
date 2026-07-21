@@ -31,7 +31,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     // Don't set Content-Type for FormData — the browser sets it automatically
     // (including the multipart boundary), which is required for file uploads.
     const isFormData = options.body instanceof FormData;
-    const baseHeaders = isFormData ? {} : { "Content-Type": "application/json" };
+    const baseHeaders: Record<string, string> = isFormData ? {} : { "Content-Type": "application/json" };
 
     // 1. Initial Request
     let response = await fetch(url, {

@@ -15,7 +15,7 @@ export default function PostItem({ post }: { post: Post }) {
     return (
         <article className={styles.card}>
             <div className={styles.header}>
-                <div className={styles.avatarWrapper}>
+                <Link href={`/user/${post.author.id}`} className={styles.avatarWrapper}>
                     {post.author.image_path && (
                         <img
                             src={getMediaUrl(post.author.image_path)}
@@ -33,9 +33,9 @@ export default function PostItem({ post }: { post: Post }) {
                     >
                         {initial}
                     </div>
-                </div>
+                </Link>
                 <div className={styles.meta}>
-                    <Link href="#">{post.author.username}</Link>
+                    <Link href={`/user/${post.author.id}`}>{post.author.username}</Link>
                     <span className={styles.date}>{post.date_posted}</span>
                 </div>
             </div>

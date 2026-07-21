@@ -106,3 +106,13 @@ export async function deleteProfilePicture(userId: number): Promise<User> {
     }
     return response.json();
 }
+
+export async function getUser(userId: number): Promise<User> {
+    const response = await apiFetch(`/api/users/${userId}`);
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to fetch user");
+    }
+    return response.json();
+}
