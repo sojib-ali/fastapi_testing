@@ -75,3 +75,34 @@ export async function deleteUser(userId: number): Promise<void> {
         throw new Error(err.detail || "Failed to delete account");
     }
 }
+
+export async function uploadProfilePicture(userId: number, file: File): Promise<User> {
+    // FormData is required for file uploads — NOT JSON.
+    // apiFetch detects FormData and skips setting Content-Type so the browser
+    // can set the correct multipart/form-data boundary automatically.
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await apiFetch(`/api/users/${userId}/picture`, {
+        method: "PATCH",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to upload profile picture");
+    }
+    return response.json();
+}
+
+export async function deleteProfilePicture(userId: number): Promise<User> {
+    const response = await apiFetch(`/api/users/${userId}/picture`, {
+        method: "DELETE",
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to delete profile picture");
+    }
+    return response.json();
+}

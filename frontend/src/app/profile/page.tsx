@@ -1,11 +1,9 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
 import { useLogout } from "@/util/query-hooks/useAuthHooks";
 import useRequireAuth from "@/util/query-hooks/useRequireAuth";
-import { useUpdateUser, useDeleteUser } from "@/util/query-hooks/useUserSettings";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useUpdateUser, useDeleteUser, useUploadProfilePicture, useDeleteProfilePicture } from "@/util/query-hooks/useUserSettings";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./profile.module.css";
 import { getMediaUrl } from "@/util/mediaUrl";
@@ -20,7 +18,14 @@ export default function ProfilePage() {
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
     const { mutate: updateUser, isPending: isUpdating, error: updateError, isSuccess: updateSuccess } = useUpdateUser();
     const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+    const { mutate: uploadPicture, isPending: isUploading, error: uploadError } = useUploadProfilePicture();
+    const { mutate: deletePicture, isPending: isDeletingPicture } = useDeleteProfilePicture();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    // Image upload state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormData>();
 
@@ -41,6 +46,39 @@ export default function ProfilePage() {
 
     const handleDeleteAccount = () => {
         deleteUser(user.id);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            setPreviewUrl(null);
+            setSelectedFile(null);
+            return;
+        }
+        setSelectedFile(file);
+        // Generate a local preview URL using FileReader (no upload yet)
+        const reader = new FileReader();
+        reader.onload = (ev) => setPreviewUrl(ev.target?.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleUpload = () => {
+        if (!selectedFile) return;
+        uploadPicture(
+            { userId: user.id, file: selectedFile },
+            {
+                onSuccess: () => {
+                    // Reset the file input after successful upload
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                },
+            }
+        );
+    };
+
+    const handleDeletePicture = () => {
+        deletePicture(user.id);
     };
 
     return (
@@ -116,11 +154,60 @@ export default function ProfilePage() {
 
                 <div className={styles.divider} />
 
-                {/* ── Profile Picture (Placeholder) ── */}
+                {/* ── Profile Picture ── */}
                 <section className={styles.section}>
                     <h4 className={styles.sectionTitle}>Profile Picture</h4>
-                    <p className={styles.muted}>File upload coming in a future update.</p>
-                    <input type="file" className={styles.input} disabled />
+
+                    {/* Live preview — shown as soon as a file is selected */}
+                    {previewUrl && (
+                        <div className={styles.previewWrapper}>
+                            <img
+                                src={previewUrl}
+                                alt="Preview"
+                                className={styles.previewImg}
+                            />
+                            <span className={styles.previewLabel}>Preview</span>
+                        </div>
+                    )}
+
+                    <div className={styles.uploadRow}>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
+                            className={styles.fileInput}
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            type="button"
+                            className={styles.btnPrimary}
+                            onClick={handleUpload}
+                            disabled={!selectedFile || isUploading}
+                        >
+                            {isUploading ? "Uploading..." : "Upload"}
+                        </button>
+                    </div>
+
+                    <p className={styles.muted} style={{ marginTop: "8px" }}>
+                        Max 5 MB · JPEG, PNG, GIF, WebP
+                    </p>
+
+                    {uploadError && (
+                        <p className={styles.errorMsg}>{uploadError.message}</p>
+                    )}
+
+                    {/* Only show remove button if user currently has a custom picture */}
+                    {user.image_file && (
+                        <button
+                            type="button"
+                            className={styles.btnDanger}
+                            onClick={handleDeletePicture}
+                            disabled={isDeletingPicture}
+                            style={{ marginTop: "12px" }}
+                        >
+                            {isDeletingPicture ? "Removing..." : "Remove Picture"}
+                        </button>
+                    )}
                 </section>
 
                 <div className={styles.divider} />

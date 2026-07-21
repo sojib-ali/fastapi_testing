@@ -1,8 +1,7 @@
 // src/util/query-hooks/useUserSettings.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateUser, deleteUser } from "@/util/authApi";
+import { updateUser, deleteUser, uploadProfilePicture, deleteProfilePicture } from "@/util/authApi";
 import { useRouter } from "next/navigation";
-import { useLogout } from "./useAuthHooks";
 
 export function useUpdateUser() {
     const queryClient = useQueryClient();
@@ -20,14 +19,36 @@ export function useUpdateUser() {
 export function useDeleteUser() {
     const queryClient = useQueryClient();
     const router = useRouter();
-    const { mutate: logout } = useLogout();
 
     return useMutation({
         mutationFn: (userId: number) => deleteUser(userId),
         onSuccess: () => {
-            // Clear everything and redirect to home
             queryClient.clear();
             router.push("/");
+        },
+    });
+}
+
+export function useUploadProfilePicture() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ userId, file }: { userId: number; file: File }) =>
+            uploadProfilePicture(userId, file),
+        onSuccess: (updatedUser) => {
+            // Instantly update the avatar everywhere — navbar, profile header, post cards
+            queryClient.setQueryData(["authUser"], updatedUser);
+        },
+    });
+}
+
+export function useDeleteProfilePicture() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (userId: number) => deleteProfilePicture(userId),
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(["authUser"], updatedUser);
         },
     });
 }
