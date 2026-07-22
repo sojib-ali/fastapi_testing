@@ -243,9 +243,13 @@ async def clear_existing_data() -> None:
 
     # Clear database tables (order respects foreign keys)
     async with AsyncSessionLocal() as db:
+        # Password reset tokens must be deleted before users
+        # because they reference the User table.
+        await db.execute(delete(models.PasswordResetToken))
         await db.execute(delete(models.Post))
         await db.execute(delete(models.User))
         await db.commit()
+
     print("Cleared existing data")
 
 
@@ -253,7 +257,9 @@ async def update_post_dates() -> None:
     now = datetime.now(UTC)
 
     async with AsyncSessionLocal() as db:
-        result = await db.execute(select(models.Post).order_by(models.Post.id))
+        result = await db.execute(
+            select(models.Post).order_by(models.Post.id),
+        )
         posts = result.scalars().all()
 
         if not posts:
@@ -270,7 +276,11 @@ async def update_post_dates() -> None:
         for i, post in enumerate(posts[1:], start=1):
             days_ago = (len(posts) - i) * 1.5
             hours_offset = (i * 7) % 24
-            post_date = now - timedelta(days=days_ago, hours=hours_offset)
+            post_date = now - timedelta(
+                days=days_ago,
+                hours=hours_offset,
+            )
+
             await db.execute(
                 update(models.Post)
                 .where(models.Post.id == post.id)
@@ -278,6 +288,7 @@ async def update_post_dates() -> None:
             )
 
         await db.commit()
+
     print("Updated post dates")
 
 
@@ -288,12 +299,14 @@ async def populate() -> None:
         transport=transport,
         base_url="http://localhost",
     ) as client:
-        # Clear existing data (local images first, then database)
+        # Clear existing data
+        # Local images are deleted first, then database data.
         await clear_existing_data()
 
         users: list[dict] = []
 
         print(f"\nCreating {len(USERS)} users...")
+
         for user_data in USERS:
             # 1. Register the user
             response = await client.post(
@@ -305,7 +318,9 @@ async def populate() -> None:
                 },
             )
             response.raise_for_status()
+
             user = response.json()
+
             print(f"  Created: {user['username']}")
 
             # 2. Log in to get HttpOnly auth cookies
@@ -317,11 +332,14 @@ async def populate() -> None:
                 },
             )
             login_response.raise_for_status()
+
             # httpx automatically stores cookies from Set-Cookie headers
             auth_cookies = login_response.cookies
 
+            # 3. Upload profile picture if the user has one
             if image_name := user_data.get("image"):
                 image_path = POPULATE_IMAGES_DIR / image_name
+
                 if image_path.exists():
                     response = await client.patch(
                         f"/api/users/{user['id']}/picture",
@@ -335,26 +353,38 @@ async def populate() -> None:
                         cookies=auth_cookies,
                     )
                     response.raise_for_status()
+
                     print(f"    Uploaded: {image_name}")
 
             users.append(
-                {"id": user["id"], "username": user["username"], "cookies": auth_cookies},
+                {
+                    "id": user["id"],
+                    "username": user["username"],
+                    "cookies": auth_cookies,
+                },
             )
 
         print(f"\nCreating {len(POSTS) + 1} posts...")
 
-        # First create POST_44 (will become oldest after date update)
+        # First create POST_44
+        # It will become the oldest after the date update.
         response = await client.post(
             "/api/posts",
-            json={"title": POST_44["title"], "content": POST_44["content"]},
+            json={
+                "title": POST_44["title"],
+                "content": POST_44["content"],
+            },
             cookies=users[0]["cookies"],
         )
         response.raise_for_status()
+
         print(f"  Created: '{POST_44['title']}'")
 
-        # Create remaining posts in reverse (last in list = oldest, first = newest)
+        # Create remaining posts in reverse
+        # Last in list = oldest, first = newest
         for i, post_data in enumerate(reversed(POSTS)):
             user = users[i % len(users)]
+
             response = await client.post(
                 "/api/posts",
                 json={
@@ -364,7 +394,9 @@ async def populate() -> None:
                 cookies=user["cookies"],
             )
             response.raise_for_status()
+
             title = post_data["title"]
+
             print(
                 f"  Created: '{title[:50]}...'"
                 if len(title) > 50
@@ -372,6 +404,7 @@ async def populate() -> None:
             )
 
         print("\nUpdating post dates...")
+
         await update_post_dates()
 
     await engine.dispose()
