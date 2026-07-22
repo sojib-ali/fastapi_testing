@@ -52,3 +52,10 @@ export function useDeleteProfilePicture() {
         },
     });
 }
+
+export function useChangePassword() {
+    return useMutation({
+        mutationFn: (data: { current_password: string; new_password: string }) =>
+            import("@/util/authApi").then(mod => mod.changePassword(data)),
+    });
+}

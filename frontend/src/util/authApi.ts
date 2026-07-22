@@ -116,3 +116,43 @@ export async function getUser(userId: number): Promise<User> {
     }
     return response.json();
 }
+
+export async function forgotPassword(email: string) {
+    const response = await apiFetch("/api/users/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to send reset link");
+    }
+    return response.json();
+}
+
+export async function resetPassword(data: { token: string; new_password: string }) {
+    const response = await apiFetch("/api/users/reset-password", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to reset password");
+    }
+    return response.json();
+}
+
+export async function changePassword(data: { current_password: string; new_password: string }) {
+    const response = await apiFetch("/api/users/me/password", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to change password");
+    }
+    return response.json();
+}
+

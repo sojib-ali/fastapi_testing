@@ -3,6 +3,7 @@
 
 import { useLogin } from "@/util/query-hooks/useAuthHooks";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 
 
 export default function LoginPage() {
@@ -49,7 +50,15 @@ export default function LoginPage() {
                 >
                     {isPending ? "Logging in..." : "Login"}
                 </button>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", marginTop: "10px" }}>
+                    <Link href="/forgot-password" style={{ color: "#0070f3", textDecoration: "none" }}>Forgot Password?</Link>
+                </div>
             </form>
+            
+            <p style={{ marginTop: "20px", textAlign: "center", fontSize: "0.95rem" }}>
+                Don't have an account? <Link href="/register" style={{ color: "#0070f3", textDecoration: "none" }}>Register here</Link>
+            </p>
         </div>
     );
 }

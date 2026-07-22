@@ -2,7 +2,7 @@
 
 import { useLogout } from "@/util/query-hooks/useAuthHooks";
 import useRequireAuth from "@/util/query-hooks/useRequireAuth";
-import { useUpdateUser, useDeleteUser, useUploadProfilePicture, useDeleteProfilePicture } from "@/util/query-hooks/useUserSettings";
+import { useUpdateUser, useDeleteUser, useUploadProfilePicture, useDeleteProfilePicture, useChangePassword } from "@/util/query-hooks/useUserSettings";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import styles from "./profile.module.css";
@@ -13,6 +13,12 @@ type ProfileFormData = {
     email: string;
 };
 
+type PasswordFormData = {
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+};
+
 export default function ProfilePage() {
     const { user, isLoading: authLoading, isAuthenticated } = useRequireAuth();
     const { mutate: logout, isPending: isLoggingOut } = useLogout();
@@ -20,6 +26,7 @@ export default function ProfilePage() {
     const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
     const { mutate: uploadPicture, isPending: isUploading, error: uploadError } = useUploadProfilePicture();
     const { mutate: deletePicture, isPending: isDeletingPicture } = useDeleteProfilePicture();
+    const { mutate: changePassword, isPending: isChangingPassword, error: changePasswordError, isSuccess: changePasswordSuccess } = useChangePassword();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     // Image upload state
@@ -28,6 +35,13 @@ export default function ProfilePage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormData>();
+    
+    const { 
+        register: registerPassword, 
+        handleSubmit: handleSubmitPassword, 
+        reset: resetPasswordForm, 
+        formState: { errors: errorsPassword } 
+    } = useForm<PasswordFormData>();
 
     // Pre-fill the form once user data is available
     useEffect(() => {
@@ -42,6 +56,20 @@ export default function ProfilePage() {
 
     const onSubmit = (data: ProfileFormData) => {
         updateUser({ userId: user.id, data });
+    };
+
+    const onPasswordSubmit = (data: PasswordFormData) => {
+        if (data.new_password !== data.confirm_password) {
+            return;
+        }
+        changePassword({ 
+            current_password: data.current_password, 
+            new_password: data.new_password 
+        }, {
+            onSuccess: () => {
+                resetPasswordForm();
+            }
+        });
     };
 
     const handleDeleteAccount = () => {
@@ -212,23 +240,52 @@ export default function ProfilePage() {
 
                 <div className={styles.divider} />
 
-                {/* ── Change Password (Placeholder) ── */}
+                {/* ── Change Password ── */}
                 <section className={styles.section}>
                     <h4 className={styles.sectionTitle}>Change Password</h4>
-                    <p className={styles.muted}>Password reset coming in a future update.</p>
-                    <div className={styles.field}>
-                        <label className={styles.label}>Current Password</label>
-                        <input type="password" className={styles.input} disabled placeholder="••••••••" />
-                    </div>
-                    <div className={styles.field}>
-                        <label className={styles.label}>New Password</label>
-                        <input type="password" className={styles.input} disabled placeholder="••••••••" />
-                    </div>
-                    <div className={styles.field}>
-                        <label className={styles.label}>Confirm New Password</label>
-                        <input type="password" className={styles.input} disabled placeholder="••••••••" />
-                    </div>
-                    <button className={styles.btnPrimary} disabled>Change Password</button>
+                    <form onSubmit={handleSubmitPassword(onPasswordSubmit)} className={styles.form}>
+                        <div className={styles.field}>
+                            <label className={styles.label}>Current Password</label>
+                            <input 
+                                type="password" 
+                                className={styles.input} 
+                                {...registerPassword("current_password", { required: "Current password is required" })}
+                                placeholder="••••••••" 
+                            />
+                            {errorsPassword.current_password && <span className={styles.error}>{errorsPassword.current_password.message}</span>}
+                        </div>
+                        <div className={styles.field}>
+                            <label className={styles.label}>New Password</label>
+                            <input 
+                                type="password" 
+                                className={styles.input} 
+                                {...registerPassword("new_password", { 
+                                    required: "New password is required",
+                                    minLength: { value: 8, message: "Must be at least 8 characters" }
+                                })}
+                                placeholder="••••••••" 
+                            />
+                            {errorsPassword.new_password && <span className={styles.error}>{errorsPassword.new_password.message}</span>}
+                        </div>
+                        <div className={styles.field}>
+                            <label className={styles.label}>Confirm New Password</label>
+                            <input 
+                                type="password" 
+                                className={styles.input} 
+                                {...registerPassword("confirm_password", { 
+                                    required: "Confirm your new password",
+                                    validate: (val, formValues) => val === formValues.new_password || "Passwords do not match"
+                                })}
+                                placeholder="••••••••" 
+                            />
+                            {errorsPassword.confirm_password && <span className={styles.error}>{errorsPassword.confirm_password.message}</span>}
+                        </div>
+                        {changePasswordError && <p className={styles.errorMsg}>{changePasswordError.message}</p>}
+                        {changePasswordSuccess && <p className={styles.successMsg}>Password changed successfully!</p>}
+                        <button type="submit" className={styles.btnPrimary} disabled={isChangingPassword}>
+                            {isChangingPassword ? "Changing..." : "Change Password"}
+                        </button>
+                    </form>
                 </section>
 
                 <div className={styles.divider} />

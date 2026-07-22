@@ -46,3 +46,17 @@ export function useLogout() {
     });
 }
 
+export function useForgotPassword() {
+    return useMutation({
+        mutationFn: (email: string) =>
+            import("@/util/authApi").then(mod => mod.forgotPassword(email)),
+    });
+}
+
+export function useResetPassword() {
+    return useMutation({
+        mutationFn: (data: { token: string; new_password: string }) =>
+            import("@/util/authApi").then(mod => mod.resetPassword(data)),
+    });
+}
+
