@@ -10,14 +10,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from database import Base, engine
+from database import engine
 from routers import posts, users
 
 @asynccontextmanager
 async def lifespan(_app:FastAPI):
-    #Startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+   
     yield
 
     #shutdown
